@@ -17,15 +17,10 @@ jobs:
 
       - name: Download databases
         run: |
-          cat <<EOF > GeoIP.conf
-          AccountID ${{ secrets.MAXMIND_ACCOUNT_ID }}
-          LicenseKey ${{ secrets.MAXMIND_LICENSE_KEY }}
-          EditionIDs GeoLite2-ASN GeoLite2-City GeoLite2-Country
-          DatabaseDirectory /tmp/geoip
-          EOF
-
           docker run --rm \
-            -v $(pwd)/GeoIP.conf:/etc/GeoIP.conf \
+            -e GEOIPUPDATE_ACCOUNT_ID=${{ secrets.MAXMIND_ACCOUNT_ID }} \
+            -e GEOIPUPDATE_LICENSE_KEY=${{ secrets.MAXMIND_LICENSE_KEY }} \
+            -e GEOIPUPDATE_EDITION_IDS="GeoLite2-ASN GeoLite2-City GeoLite2-Country" \
             -v /tmp/geoip:/usr/share/GeoIP \
             ghcr.io/maxmind/geoipupdate:latest
 
@@ -37,7 +32,6 @@ jobs:
             fi
           done
 
-          rm -f GeoIP.conf
           mkdir -p upload
           cp -v /tmp/geoip/*.mmdb upload/
           echo "TAG_NAME=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
